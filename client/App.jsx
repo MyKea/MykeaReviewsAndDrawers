@@ -5,7 +5,7 @@ import CareInstructions from './Components/CareInstructions/CareInstructions.jsx
 import EnvironmentAndMaterials from './Components/EnvironmentAndMaterials/EnvironmentAndMaterials.jsx';
 import PackageDetails from './Components/PackageDetails/PackageDetails.jsx';
 import AssemblyAndDocuments from './Components/AssemblyAndDocuments.jsx';
-import Reviews from './Components/Reviews.jsx';
+import Reviews from './Components/Reviews/Reviews.jsx';
 import ProductAvailability from './Components/ProductAvailability.jsx';
 const axios = require('axios');
 
@@ -14,15 +14,19 @@ export default class App extends React.Component {
     super(props);
 
     this.state = {
-      currentItem: {}
+      currentItem: {},
+      reviews: []
     };
 
     this.getCurrentItem = this.getCurrentItem.bind(this);
+    this.getReviews = this.getReviews.bind(this);
     this.formatSizeData = this.formatSizeData.bind(this);
+    this.updateReviewHelpful = this.updateReviewHelpful.bind(this);
   }
 
   componentDidMount() {
-    this.getCurrentItem(35);
+    this.getCurrentItem(23);
+    this.getReviews(23);
   }
 
   getCurrentItem(currentId) {
@@ -33,11 +37,37 @@ export default class App extends React.Component {
       .then(result => {
         let data = result.data[0];
         data.product_size = this.formatSizeData(data.product_size);
-        console.log(data.package_details);
         this.setState({
           currentItem: data
         });
       })
+      .catch(error => console.log(error));
+  }
+
+  getReviews(currentId) {
+    axios
+      .get('/reviews', {
+        params: { itemId: currentId }
+      })
+      .then(result => {
+        this.setState({
+          reviews: result.data
+        });
+      })
+      .catch(error => console.log(error));
+  }
+
+  updateReviewHelpful(review, yesPlus, noPlus) {
+    let reviewId = review.review_id;
+    let yesCount = review.review_helpful_yes + yesPlus;
+    let noCount = review.review_helpful_no + noPlus;
+    axios
+      .put('/reviews', {
+        reviewId: reviewId,
+        yesAdd: yesCount,
+        noAdd: noCount
+      })
+      .then(this.getReviews(this.state.currentItem.id))
       .catch(error => console.log(error));
   }
 
@@ -67,6 +97,7 @@ export default class App extends React.Component {
       environment_and_materials,
       package_details
     } = this.state.currentItem;
+    const { reviews } = this.state;
     return (
       <div>
         <ProductDescription id={id} boxNumber={box_number} description={product_description} />
@@ -75,7 +106,7 @@ export default class App extends React.Component {
         <EnvironmentAndMaterials id={id} environmentAndMaterials={environment_and_materials} />
         <PackageDetails id={id} packageDetails={package_details} />
         <AssemblyAndDocuments />
-        <Reviews />
+        <Reviews clickUpdateHelpful={this.updateReviewHelpful} reviews={reviews} />
         <ProductAvailability />
       </div>
     );
