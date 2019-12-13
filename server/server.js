@@ -2,12 +2,19 @@ let express = require('express');
 let app = express();
 let db = require('../database/db.js');
 const port = 3020;
+let cors = require('cors')();
+
+app.use(cors);
 
 db.connection.connect(() => console.log('connected to db'));
 
 app.use(express.json());
 
 app.use(express.static(__dirname + '/../dist'));
+
+app.use('/bundle', express.static(__dirname + '/../dist/bundle.js'));
+
+app.use('/css', express.static(__dirname + '/../dist/stylesheet.css'));
 
 app.get('/item', (req, res) => {
   let itemId = req.query.itemId;
@@ -32,7 +39,6 @@ app.get('/reviews', (req, res) => {
 });
 
 app.put('/reviews', (req, res) => {
-  console.log(req.body);
   db.updateHelpfulReviews(req.body.reviewId, req.body.yesAdd, req.body.noAdd, function(
     error,
     result
@@ -46,9 +52,7 @@ app.put('/reviews', (req, res) => {
 });
 
 app.post('/reviews', (req, res) => {
-  console.log(req.body);
   let currentDate = getCurrentDate();
-  console.log(currentDate);
   db.writeNewReview(
     req.body.productId,
     req.body.overallRating,

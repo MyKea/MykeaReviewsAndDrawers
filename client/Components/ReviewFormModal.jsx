@@ -1,6 +1,9 @@
 import React from 'react';
 import StarRatingComponent from 'react-star-rating-component';
 const axios = require('axios');
+const baseURL = 'http://drawersreviews-env.bz3ikgcjmi.us-east-2.elasticbeanstalk.com/';
+
+// const baseURL = 'localhost:3020';
 
 export default class ReviewFormModal extends React.Component {
   constructor(props) {
@@ -30,6 +33,7 @@ export default class ReviewFormModal extends React.Component {
     this.onClickRecommendedNo = this.onClickRecommendedNo.bind(this);
     this.addWorksAsExpectedRating = this.addWorksAsExpectedRating.bind(this);
     this.processReviewSubmit = this.processReviewSubmit.bind(this);
+    this.sendReviewToWindow = this.sendReviewToWindow.bind(this);
   }
 
   addOverallRating(nextValue) {
@@ -91,14 +95,25 @@ export default class ReviewFormModal extends React.Component {
     });
   }
 
+  sendReviewToWindow(review) {
+    window.dispatchEvent(
+      new CustomEvent('newReview', {
+        bubbles: true,
+        detail: review
+      })
+    );
+  }
+
   processReviewSubmit() {
     let newReview = this.state;
     newReview.productId = this.props.itemId;
+    let reviewToProxy = { id: this.props.itemId, newRating: this.state.overallRating };
     axios
-      .post('/reviews', newReview)
+      .post('/reviews', newReview, { baseURL: baseURL })
       .then(result => console.log(result))
-      .then(this.props.getReviews())
-      .then(this.props.submitReview())
+      .then(this.sendReviewToWindow(reviewToProxy))
+      .then(this.props.getReviews(this.props.itemId))
+      .then(this.props.submitReview(this.props.itemId))
       .catch(error => console.log(error));
   }
 
@@ -107,8 +122,8 @@ export default class ReviewFormModal extends React.Component {
       <div className="aw_modal_transparency">
         <div className="aw_review_modal">
           <div className="aw_modal_text">
-            <div>
-              <span>Overall Rating:</span>
+            <div className="aw_modal_line">
+              <span className="aw_bottom_padding_star_label">Overall Rating:</span>
               <StarRatingComponent
                 name="overallRating"
                 starCount={5}
@@ -116,23 +131,28 @@ export default class ReviewFormModal extends React.Component {
                 onStarClick={this.addOverallRating}
               />
             </div>
-            <div>
-              <span>Review Title:</span>
+            <div className="aw_modal_line">
+              <span className="aw_bottom_padding_star_label">Review Title:</span>
               <input
+                className="aw_input_box"
                 type="text"
+                size="50"
                 value={this.state.reviewTitle}
                 onChange={this.onChangeReviewTitle}
+                outline="none"
               ></input>
             </div>
-            <div>
-              <span>Review:</span>
+            <div className="aw_modal_line">
+              <span className="aw_bottom_padding_star_label">Review:</span>
               <input
+                className="aw_input_box"
                 type="text"
+                size="80"
                 value={this.state.reviewText}
                 onChange={this.onChangeReviewText}
               ></input>
             </div>
-            <div>
+            <div className="aw_modal_line">
               <span>Would you recommend this product to a friend?</span>
               <button
                 className={
@@ -155,8 +175,10 @@ export default class ReviewFormModal extends React.Component {
                 No
               </button>
             </div>
-            <div>
-              <span>How do you rate the value for money?</span>
+            <div className="aw_modal_line">
+              <span className="aw_bottom_padding_star_label">
+                How do you rate the value for money?
+              </span>
               <StarRatingComponent
                 name="valueForMoney"
                 starCount={5}
@@ -164,8 +186,10 @@ export default class ReviewFormModal extends React.Component {
                 onStarClick={this.addValueForMoneyRating}
               />
             </div>
-            <div>
-              <span>How do you rate the product quality?</span>
+            <div className="aw_modal_line">
+              <span className="aw_bottom_padding_star_label">
+                How do you rate the product quality?
+              </span>
               <StarRatingComponent
                 name="productQuality"
                 starCount={5}
@@ -173,8 +197,10 @@ export default class ReviewFormModal extends React.Component {
                 onStarClick={this.addProductQualityRating}
               />
             </div>
-            <div>
-              <span>How do you rate the product appearance?</span>
+            <div className="aw_modal_line">
+              <span className="aw_bottom_padding_star_label">
+                How do you rate the product appearance?
+              </span>
               <StarRatingComponent
                 name="productAppearance"
                 starCount={5}
@@ -182,8 +208,10 @@ export default class ReviewFormModal extends React.Component {
                 onStarClick={this.addProductAppearanceRating}
               />
             </div>
-            <div>
-              <span>How do you rate the ease of assembly/installation?</span>
+            <div className="aw_modal_line">
+              <span className="aw_bottom_padding_star_label">
+                How do you rate the ease of assembly/installation?
+              </span>
               <StarRatingComponent
                 name="easeOfAssembly"
                 starCount={5}
@@ -191,8 +219,10 @@ export default class ReviewFormModal extends React.Component {
                 onStarClick={this.addEaseOfAssemblyRating}
               />
             </div>
-            <div>
-              <span>Rate whether the product works as you expected:</span>
+            <div className="aw_modal_line">
+              <span className="aw_bottom_padding_star_label">
+                Rate whether the product works as you expected:
+              </span>
               <StarRatingComponent
                 name="productWorksAsExpected"
                 starCount={5}
@@ -200,19 +230,20 @@ export default class ReviewFormModal extends React.Component {
                 onStarClick={this.addWorksAsExpectedRating}
               />
             </div>
-            <div>
-              <span>Nickname:</span>
+            <div className="aw_modal_line">
+              <span className="aw_bottom_padding_star_label">Nickname:</span>
               <input
+                className="aw_input_box"
                 type="text"
                 value={this.state.username}
                 onChange={this.onChangeUsername}
               ></input>
             </div>
-            <div className="aw_form_submit_button">
-              <button className="aw_modal_text" onClick={this.processReviewSubmit}>
+            <div className="aw_button_center_form">
+              <button className="aw_submit_button" onClick={this.processReviewSubmit}>
                 Submit Review
               </button>
-              <button className="aw_modal_text" onClick={this.props.submitReview}>
+              <button className="aw_cancel_button" onClick={this.props.submitReview}>
                 Cancel
               </button>
             </div>
